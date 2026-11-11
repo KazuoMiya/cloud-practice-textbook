@@ -32,11 +32,23 @@ class ApiExampleTest(unittest.TestCase):
 
     def test_invalid_inputs_never_write(self):
         for body in [None, '', '{', 'null', '[]', '42', '{"text":1}', '{"text":[]}', '{"text":" "}',
-                     json.dumps({'text': 'a' * 201}), json.dumps({'text': 'a', 'extra': 'x' * 1024})]:
+                     json.dumps({'text': 'a' * 201}), json.dumps({'text': 'あ' * 201}),
+                     json.dumps({'text': 'a', 'extra': 'x' * 4096})]:
             with self.subTest(body=str(body)[:30]):
                 self.assertEqual(self.call('POST', body)['statusCode'], 400)
         self.assertEqual(self.call('POST', 'e30=', isBase64Encoded=True)['statusCode'], 400)
         self.table.put_item.assert_not_called()
+
+    def test_longest_allowed_memo_fits_in_the_body_limit(self):
+        # 200 characters must be accepted however the client encodes them:
+        # raw UTF-8, \uXXXX escapes (json.dumps default), or surrogate pairs.
+        for label, text, escape in [('utf8', 'あ' * 200, False), ('escaped', 'あ' * 200, True),
+                                    ('surrogates', '\U0001F600' * 200, True)]:
+            with self.subTest(label):
+                body = json.dumps({'text': text}, ensure_ascii=escape)
+                self.assertLessEqual(len(body.encode('utf-8')), 4096)
+                self.assertEqual(self.call('POST', body)['statusCode'], 201)
+        self.assertEqual(self.table.put_item.call_count, 3)
 
     def test_unsupported_method_never_reads_or_writes(self):
         self.assertEqual(self.call('DELETE')['statusCode'], 405)
