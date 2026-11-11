@@ -12,3 +12,6 @@ terraform.tfvars
 # 保存した実行計画と、異常終了時の記録
 *.tfplan
 crash.log
+
+# 障害の演習で、入れた障害の名前を控えるファイル
+.fault

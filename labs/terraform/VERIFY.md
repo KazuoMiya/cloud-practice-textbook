@@ -219,6 +219,33 @@ aws ec2 terminate-instances --instance-ids <instance-id>
 
 期待する結果：新しいサーバーが起動し、ターゲットが再び2つとも `healthy` になる。終了させた時刻と、2つとも `healthy` に戻った時刻を記録する。
 
+### 7-8. 障害の演習が、本文の説明どおりに再現する
+
+本文の第35章「実機で再現して調べる」の内容です。障害を1つ入れ、表の「見えるもの」を確かめ、`terraform apply` で元に戻す、という流れを、5つの障害について繰り返します。時間が足りない場合は、依頼した人と相談して、ここを別の日に回します。
+
+```bash
+../faults/inject.sh target-group-detached
+# 表の時間だけ待ってから、次の4つで確かめる
+curl -s -o /dev/null -w '%{http_code} %{time_total}\n' "$(terraform output -raw alb_url)"
+aws elbv2 describe-target-health --target-group-arn "$(terraform output -raw target_group_arn)" \
+  --query 'TargetHealthDescriptions[].[Target.Id,TargetHealth.State,TargetHealth.Reason]' --output table
+aws ssm describe-instance-information \
+  --query 'InstanceInformationList[].[InstanceId,PingStatus]' --output table
+terraform plan
+# 元に戻す。2台とも healthy に戻ってから、次の障害へ進む
+terraform apply
+```
+
+| 障害の名前 | 待つ時間 | 見えるもの | `terraform plan` の表示 |
+|---|---|---|---|
+| target-group-detached | 2分 | 503がすぐに返る。ターゲットが1台も表示されない | `aws_autoscaling_group.app` が `~` |
+| app-sg-closed | 2分 | 約10秒後に504が返る。ターゲットが2台とも unhealthy（Target.Timeout） | `aws_vpc_security_group_ingress_rule.app_from_alb` が `+` |
+| health-path | 10分 | 200が返る。ターゲットが unhealthy（Target.ResponseCodeMismatch）。サーバーが入れ替わり続ける | `aws_lb_target_group.app` が `~` |
+| no-egress-route | 10分 | 200が返るが、ホスト名が1種類。古いサーバーが ConnectionLost。新しいサーバーが healthy にならない | `aws_route_table.app` が `~` |
+| web-stopped | 10分 | 入れた直後は502が返る。10分後には200に戻り、ホスト名が変わっている | `No changes.`（`apply` は要らない） |
+
+期待する結果と違う表示があったら、障害の名前と、表示された内容を、そのまま報告に書きます。
+
 ## 8. 片付け
 
 ```bash
@@ -266,6 +293,8 @@ aws resourcegroupstaggingapi get-resources --tag-filters Key=Project,Values=clou
     変更3の後の plan ：
     apply の後、経路は元に戻った［ ］ 8080番のルールは残っていた［ ］
 7-7 終了させた時刻：        2つとも healthy に戻った時刻：
+7-8 障害の演習（表のとおりだった［ ］ 違った点：            ）
+    target-group-detached［ ］ app-sg-closed［ ］ health-path［ ］ no-egress-route［ ］ web-stopped［ ］
 8. destroy の最後の行 ：
    残った資源         ：
 
