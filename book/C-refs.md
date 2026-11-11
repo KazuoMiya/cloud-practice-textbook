@@ -89,6 +89,10 @@
 - [高度な機能の有効化](https://docs.aws.amazon.com/accounts/latest/reference/activate-advanced-features.html)（AWS Account Management）
 - [Auto Scalingグループへのロードバランサーの関連付け](https://docs.aws.amazon.com/autoscaling/ec2/userguide/attach-load-balancer-asg.html)（Amazon EC2 Auto Scaling）
 - [REST APIとHTTP APIの選び方](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html)（Amazon API Gateway）
+- [管理画面の認証情報でAWS CLIにログインする](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html)（AWS CLI。`aws login` の前提、有効期間、ログアウト）
+- [Simplified developer access to AWS with 'aws login'](https://aws.amazon.com/blogs/security/simplified-developer-access-to-aws-with-aws-login)（AWS Security Blog、2025年11月）
+- [ターゲットグループのヘルスチェック](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html)（Elastic Load Balancing。全台が異常なときの振り分け）
+- [パブリックIPv4アドレスの利用の確認と最適化](https://aws.amazon.com/blogs/networking-and-content-delivery/identify-and-optimize-public-ipv4-address-usage-on-aws)（AWS Networking & Content Delivery Blog。費用の使用タイプ）
 
 ## 第3部〜第5部の出典：設計、上級、演習
 
@@ -107,6 +111,8 @@
 - [サービスコントロールポリシー（SCP）](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html)（AWS Organizations）
 - [推奨されるOUとアカウント](https://docs.aws.amazon.com/whitepapers/latest/organizing-your-aws-environment/recommended-ous-and-accounts.html)（AWS ホワイトペーパー）
 - [AWS Security Hub とは](https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html)（AWS）
+- [リージョンにもとづいてアクセスを拒否する例](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_aws_deny-requested-region.html)（AWS IAM）
+- [OUに適用するリージョン拒否のコントロール](https://docs.aws.amazon.com/controltower/latest/userguide/ou-region-deny.html)（AWS Control Tower。除外されるサービスの一覧）
 
 ネットワーク、性能、費用
 
@@ -115,11 +121,14 @@
 - [Lambda のクォータ](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html)（AWS Lambda）
 - [Amazon SQS のメッセージのクォータ](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/quotas-messages.html)（Amazon SQS）
 - [Savings Plans とは](https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html)（AWS）
+- [Savings Plans の種類](https://docs.aws.amazon.com/savingsplans/latest/userguide/plan-types.html)（AWS。種類ごとの対象と割引の上限）
+- [Database Savings Plans の開始](https://aws.amazon.com/about-aws/whats-new/2025/12/database-savings-plans-savings)（AWS、2025年12月）
 
 移行、運用、コンテナ、データとAI
 
 - [移行戦略（7つのR）](https://docs.aws.amazon.com/prescriptive-guidance/latest/large-migration-guide/migration-strategies.html)（AWS 規範ガイダンス）
 - [Amazon ECS のブルー/グリーンデプロイ](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-blue-green.html)（Amazon ECS）
+- [Amazon ECS のリニアとカナリアのデプロイ](https://aws.amazon.com/about-aws/whats-new/2025/10/amazon-ecs-built-in-linear-canary-deployments)（AWS、2025年10月）
 - [Amazon EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/automode.html)（Amazon EKS）
 - [Amazon Bedrock Knowledge Bases](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html)（Amazon Bedrock）
 
@@ -137,5 +146,5 @@
 - 変化を追うとき：AWS What's New。週に15分、眺める
 
 :::note この本の時点
-本文は、2026年11月10日時点の情報にもとづいています。料金、無料プランの条件、資格の名称、各サービスの上限値は、変わることがあります。計算問題の単価は、練習のための仮の値で、実際の料金とは異なります。
+本文は、2026年11月11日時点の情報にもとづいています。料金、無料プランの条件、資格の名称、各サービスの上限値は、変わることがあります。計算問題の単価は、練習のための仮の値で、実際の料金とは異なります。
 :::
