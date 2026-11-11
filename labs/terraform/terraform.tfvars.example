@@ -1,0 +1,8 @@
+# このファイルを terraform.tfvars という名前で複製し、必要な行だけを書き換える。
+# terraform.tfvars は、Gitに追加しない（.gitignore で除外している）。
+
+# ALBへのアクセスを、自分のIPアドレスだけに絞る（https://checkip.amazonaws.com で確認できる）
+# allowed_http_cidr = "203.0.113.10/32"
+
+# 資源の名前を変える（同じアカウントを複数人で使うときは、人ごとに変える）
+# project = "cloudbook-miya"
