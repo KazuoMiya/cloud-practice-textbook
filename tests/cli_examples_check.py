@@ -61,6 +61,9 @@ def arguments(command):
 
 def xform(name):
     """Operation or member name to its command-line spelling, as botocore does it."""
+    plural_acronym = re.search(r'[A-Z]{2,}s$', name)   # TargetGroupARNs -> target-group-arns
+    if plural_acronym:
+        name = name[:plural_acronym.start()] + '-' + plural_acronym.group().lower()
     name = re.sub(r'(.)([A-Z][a-z]+)', r'\1-\2', name)
     return re.sub(r'([a-z0-9])([A-Z])', r'\1-\2', name).lower()
 
@@ -158,6 +161,7 @@ def self_test(models):
         ("aws ec2 describe-subnet", 1),
         ("aws ec3 describe-subnets", 1),
         ("aws ec2 describe-nat-gateways --filters Name=vpc-id,Values=x", 1),
+        ("aws autoscaling detach-load-balancer-target-groups --auto-scaling-group-name x --target-group-arns y", 0),
     ]
     return [command for command, expected in cases if len(problems(models, arguments(command)) or []) != expected]
 
