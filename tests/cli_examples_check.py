@@ -1,4 +1,4 @@
-"""Check the AWS CLI examples printed in the book against the API models shipped with the AWS CLI.
+"""Check the AWS CLI examples printed in the book and the lab documents against the API models shipped with the AWS CLI.
 
 Nothing is executed and no credentials or network are used. For every
 `aws <service> <operation> ...` in the manuscript, the script looks the
@@ -33,7 +33,7 @@ MODEL_NAME = {'s3api': 's3'}
 
 
 def printed_commands():
-    for path in sorted((ROOT / 'book').glob('*.md')):
+    for path in sorted([*(ROOT / 'book').glob('*.md'), *(ROOT / 'labs').rglob('*.md')]):
         text = path.read_text(encoding='utf-8')
         found = []
         for block in re.findall(r'```bash\n(.*?)```', text, re.S):
