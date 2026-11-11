@@ -31,6 +31,7 @@
     var changed = p.key !== current;
     if (changed) {
       arts.forEach(function (a) { a.hidden = a.id !== p.key; });
+      root.removeAttribute('data-route');
       current = p.key;
       Array.prototype.forEach.call(toc.querySelectorAll('a'), function (a) {
         var on = a.getAttribute('data-toc') === p.key;

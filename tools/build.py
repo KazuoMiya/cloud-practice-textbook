@@ -7,7 +7,7 @@
 
 Markdownの拡張:  :::kind タイトル ... :::   {{ch:key}}  {{ch:key|t}}  {{fig:name|caption}}  - [ ] チェックリスト
 """
-import hashlib, html, pathlib, re, sys
+import hashlib, html, os, pathlib, re, sys
 import markdown
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -240,6 +240,13 @@ def main():
            'padding-bottom:env(safe-area-inset-bottom,0px)}\n'
            'body{margin:0}img{max-width:100%}[hidden]{display:none!important}\n'
            + (ROOT / 'theme' / 'style.css').read_text(encoding='utf-8'))
+    # Rules that init.js switches on before the first paint, so a link to a chapter shows that chapter
+    # while the rest of the page is still loading. Keys come from the manifest, never from the URL.
+    order = [c['key'] for c, _ in arts]
+    css += (f'html[data-route] article[id="{order[0]}"]{{display:none!important}}\n'
+            + ''.join(f'html[data-route="{k}"] article[id="{k}"][hidden]{{display:block!important}}\n' for k in order[1:]))
+    # Which commit a published page was built from. CI sets GITHUB_SHA; a local build says so.
+    rev = re.sub(r'[^0-9a-f]', '', os.environ.get('GITHUB_SHA', ''))[:7] or 'local'
     css_asset = asset('style.css', css)
     state_asset = asset('state.js', (ROOT / 'theme' / 'state.js').read_text(encoding='utf-8'))
     init_asset = asset('init.js', (ROOT / 'theme' / 'init.js').read_text(encoding='utf-8'))
@@ -259,6 +266,7 @@ def main():
 <ul class="hits" id="hits" hidden></ul>
 <div class="toc" id="toc">{"".join(toc)}</div>
 {theme}
+<p class="rev">{BOOK["asof"]}版 ／ {rev}</p>
 </nav>
 <main class="main" id="main"><div class="col">
 {"".join(out)}
@@ -271,7 +279,7 @@ def main():
             "%3Crect width='32' height='32' rx='7' fill='%232a63d4'/%3E"
             "%3Cpath d='M8 9h7a3 3 0 0 1 3 3v12a3 3 0 0 0-3-3H8zM24 9h-3a3 3 0 0 0-3 3v12a3 3 0 0 1 3-3h3z' fill='%23fff'/%3E%3C/svg%3E")
     site = f"""<!doctype html>
-<html lang="ja">
+<html lang="ja" data-chapters="{" ".join(order)}">
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
@@ -279,6 +287,7 @@ def main():
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{BOOK["title"]}</title>
 <meta name="description" content="{BOOK["desc"]}">
+<meta name="revision" content="{rev}">
 <meta property="og:type" content="book">
 <meta property="og:title" content="{BOOK["title"]}">
 <meta property="og:description" content="{BOOK["desc"]}">
