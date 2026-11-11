@@ -89,6 +89,10 @@
 - [高度な機能の有効化](https://docs.aws.amazon.com/accounts/latest/reference/activate-advanced-features.html)（AWS Account Management）
 - [Auto Scalingグループへのロードバランサーの関連付け](https://docs.aws.amazon.com/autoscaling/ec2/userguide/attach-load-balancer-asg.html)（Amazon EC2 Auto Scaling）
 - [REST APIとHTTP APIの選び方](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html)（Amazon API Gateway）
+- [Terraformのインストール](https://developer.hashicorp.com/terraform/install)（HashiCorp）
+- [AWSプロバイダーのドキュメント](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)（Terraform Registry。資源ごとの項目と、変更時の動作）
+- [S3バックエンド](https://developer.hashicorp.com/terraform/language/backend/s3)（Terraform。ステートの保存とロック）
+- [テストでのモックの使い方](https://developer.hashicorp.com/terraform/language/tests/mocking)（Terraform）
 - [管理画面の認証情報でAWS CLIにログインする](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html)（AWS CLI。`aws login` の前提、有効期間、ログアウト）
 - [Simplified developer access to AWS with 'aws login'](https://aws.amazon.com/blogs/security/simplified-developer-access-to-aws-with-aws-login)（AWS Security Blog、2025年11月）
 - [ターゲットグループのヘルスチェック](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html)（Elastic Load Balancing。全台が異常なときの振り分け）

@@ -29,7 +29,9 @@
 | `tools/manifest.py` | 部と章の並び、章の題名、目安の時間、前提の章 |
 | `tools/figs.py` | 図の定義。図は、ここからSVGとして作られる |
 | `tools/build.py` | 原稿からHTMLと同じサイト内のCSS・JavaScriptファイルを作る |
+| `labs/terraform/` | 第18章の参考実装（Terraform）。本文に載せたコードは、ここからの抜粋 |
 | `.github/workflows/deploy.yml` | PR・pushを検証し、手動実行と公開承認でPagesへ反映する |
+| `.github/workflows/labs.yml` | 参考実装の書式・文法・設計テストと、本文に載せたAWS CLIのコマンドを検査する |
 
 ## 手元でページを作る
 
