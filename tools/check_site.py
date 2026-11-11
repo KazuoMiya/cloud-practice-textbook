@@ -12,6 +12,7 @@ class SiteCheck(HTMLParser):
         self.errors, self.ids, self.fragments, self.chapters = [], set(), [], []
         self.policy = ''
         self.resources = []
+        self.route_keys = []
 
     def handle_starttag(self, tag, attributes):
         attrs = dict(attributes)
@@ -42,12 +43,14 @@ class SiteCheck(HTMLParser):
                     self.errors.append('third-party resource: ' + url)
                 elif not (ROOT / 'dist' / url).is_file():
                     self.errors.append('missing resource: ' + url)
+        if tag == 'html':
+            self.route_keys = attrs.get('data-chapters', '').split()
         if tag == 'article' and 'ch' in attrs.get('class', '').split():
             self.chapters.append(attrs)
 
 
 def check():
-    site = (ROOT / 'dist/index.html').read_text()
+    site = (ROOT / 'dist/index.html').read_text(encoding='utf-8')
     parser = SiteCheck()
     parser.feed(site)
     errors = parser.errors
@@ -64,16 +67,26 @@ def check():
     visible = [a['id'] for a in parser.chapters if 'hidden' not in a]
     if visible != ['guide']:
         errors.append('initial rendering must contain only the guide')
+    ids = [a['id'] for a in parser.chapters]
+    if parser.route_keys != ids:
+        errors.append('data-chapters must list every chapter id in order')
+    styles = ''.join((ROOT / 'dist' / url).read_text(encoding='utf-8') for url in parser.resources
+                     if re.fullmatch(r'assets/style\.[0-9a-f]+\.css', url))
+    for key in ids[1:]:
+        if f'html[data-route="{key}"] article[id="{key}"][hidden]{{display:block!important}}' not in styles:
+            errors.append('no pre-paint route rule for chapter: ' + key)
+    if any(not re.fullmatch(r'[a-z0-9]+', key) for key in ids):
+        errors.append('chapter ids must stay [a-z0-9]+ (they are written into selectors)')
     if 'fonts.googleapis.com' in site or 'fonts.gstatic.com' in site:
         errors.append('Google Fonts resource remains')
     if '「クラウド入門 キャッチアップ資料」と「AWS実践ガイド」の内容を見直してひとつにまとめ' in site:
         errors.append('removed introduction text remains')
     for path in [*ROOT.glob('.github/workflows/*.yml'), ROOT / 'book/19-s8.md']:
-        source = path.read_text()
+        source = path.read_text(encoding='utf-8')
         for action in re.findall(r'uses:\s*([^\s#]+)', source):
             if not re.fullmatch(r'[\w.-]+/[\w./-]+@[0-9a-f]{40}', action):
                 errors.append(f'action is not SHA-pinned: {path.name}: {action}')
-    workflow = (ROOT / '.github/workflows/deploy.yml').read_text()
+    workflow = (ROOT / '.github/workflows/deploy.yml').read_text(encoding='utf-8')
     if 'contents: write' in workflow or 'git push' in workflow:
         errors.append('publication has repository write access')
     if errors:
