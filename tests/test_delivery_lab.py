@@ -26,6 +26,7 @@ REGISTERED = {
     'compatibilities': ['EC2', 'FARGATE'],
     'registeredAt': '2026-11-13T10:00:00+09:00',
     'registeredBy': f'arn:aws:sts::{ACCOUNT}:assumed-role/cloudbook-github-deploy/x',
+    'deleteRequestedAt': '2026-11-13T10:00:00+09:00',
     'networkMode': 'awsvpc',
     'requiresCompatibilities': ['FARGATE'],
     'cpu': '256',
@@ -110,7 +111,7 @@ class DeployScriptTest(unittest.TestCase):
         self.assertEqual((self.fake.dir / 'password').read_text().strip(), 'fake-password')
 
         sent = json.loads((self.fake.dir / 'next.json').read_text())
-        for key in ['taskDefinitionArn', 'revision', 'status', 'requiresAttributes', 'compatibilities', 'registeredAt', 'registeredBy']:
+        for key in ['taskDefinitionArn', 'revision', 'status', 'requiresAttributes', 'compatibilities', 'registeredAt', 'registeredBy', 'deleteRequestedAt']:
             self.assertNotIn(key, sent)
         self.assertEqual(sent['containerDefinitions'][0]['image'], image)
         self.assertEqual(sent['containerDefinitions'][1], REGISTERED['containerDefinitions'][1])

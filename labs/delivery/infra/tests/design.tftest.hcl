@@ -27,6 +27,25 @@ mock_provider "aws" {
     }
   }
 
+  mock_resource "aws_lb" {
+    defaults = {
+      arn      = "arn:aws:elasticloadbalancing:ap-northeast-1:111122223333:loadbalancer/app/cloudbook-alb/0123456789abcdef"
+      dns_name = "cloudbook-alb-0123456789.ap-northeast-1.elb.amazonaws.com"
+    }
+  }
+
+  mock_resource "aws_lb_target_group" {
+    defaults = {
+      arn = "arn:aws:elasticloadbalancing:ap-northeast-1:111122223333:targetgroup/cloudbook-app/0123456789abcdef"
+    }
+  }
+
+  mock_resource "aws_ecs_task_definition" {
+    defaults = {
+      arn = "arn:aws:ecs:ap-northeast-1:111122223333:task-definition/cloudbook-app:1"
+    }
+  }
+
   mock_resource "aws_iam_role" {
     defaults = {
       arn = "arn:aws:iam::111122223333:role/mock"
