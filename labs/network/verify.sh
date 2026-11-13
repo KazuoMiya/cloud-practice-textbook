@@ -157,7 +157,18 @@ retry 90 established || fail "回線を戻したのに、wan1 を通る経路に
 run router-office ip route show 10.210.1.0/24
 run pc ping -c 2 -W 1 10.210.1.10 || fail "元の経路に戻った後、届かない"
 
-say "14. 片付け"
+say "14. やり直せる：構成を作り直すと、最初の状態に戻る"
+run lab static
+out=$(try pc ping -c 1 -W 1 10.210.1.10)
+grep -q 'Destination Net Unreachable' <<<"$out" || fail "作り直した後、経路が足りない最初の状態に戻っていない"
+out=$(try pc nslookup web.prod.cloud.internal)
+if grep -q '10\.210\.1\.10' <<<"$out"; then fail "作り直した後、DNSの転送の設定が残っている"; fi
+[ -z "$(run hub ip rule | grep -E 'lookup 10[12]' || true)" ] || fail "作り直した後、分けた経路表が残っている"
+run lab down
+[ -z "$(run ip netns list)" ] || fail "lab down の後、機器が残っている"
+echo "最初の状態に戻る（期待どおり）"
+
+say "15. 片付け"
 docker compose down -v
 [ -z "$(docker compose ps -aq)" ] || fail "コンテナが残っている"
 echo
