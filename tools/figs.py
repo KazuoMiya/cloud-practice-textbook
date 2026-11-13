@@ -397,7 +397,148 @@ def pipeline():
     f.text(400, 156, '直してから元のキューに戻して再処理する', cls='fg-m')
     return f
 
-FIG_FUNCS = [levels, stack4, az, resp, share, vpc, web3, buildmap, designflow, dr4, iameval, reqpath, org, tgw, deploy, rag, pipeline]
+# ---------------------------------------------------------------- 第2部の各ステップ、第29章、第31章
+def flow5(name, label, steps, height=112):
+    """Five boxes in a row, each with a bold name and two body lines, joined by arrows."""
+    f = Fig(name, 760, height, label)
+    for x, title, lines, k in steps:
+        f.box(x, 16, 124, 72, title, kind=k, lines=lines)
+    for x in (150, 296, 442, 588):
+        f.arrow([(x, 52), (x + 20, 52)])
+    return f
+
+def s3cf():
+    f = Fig('s3cf', 760, 196, '利用者はCloudFrontだけを通ってS3に届く。S3への直接の依頼は拒否される')
+    f.box(24, 34, 150, 56, '利用者', sub='ブラウザ')
+    f.box(262, 34, 216, 56, 'CloudFront', sub='配信の入口。HTTPSで受ける', kind='acc', bold=True)
+    f.box(560, 34, 176, 56, 'S3バケット', sub='非公開')
+    f.arrow([(174, 62), (260, 62)], label='①HTTPS', lpos=(217, 54), anchor='middle')
+    f.arrow([(478, 62), (558, 62)], label='②OACで署名', lpos=(518, 54), anchor='middle')
+    f.arrow([(99, 90), (99, 150), (648, 150), (648, 92)], dashed=True)
+    f.text(373, 142, '直接の依頼は、バケットポリシーで拒否される（403）', cls='fg-m', anchor='middle')
+    f.text(373, 180, 'バケットポリシーは、自分のディストリビューションからの依頼だけを許可する', cls='fg-m', anchor='middle')
+    return f
+
+def routes():
+    f = Fig('routes', 760, 252, 'サブネットの通信の出口は、関連付けたルートテーブルで決まる')
+    rows = [(20, 'パブリックサブネット', 'ALB、NATゲートウェイ', 'public', '0.0.0.0/0 → igw'),
+            (98, 'アプリ用サブネット', 'サーバー', 'app', '0.0.0.0/0 → nat'),
+            (176, 'DB用サブネット', 'データベース', 'db', 'VPCの中だけ')]
+    for y, name, sub, rt, route in rows:
+        f.box(24, y, 196, 56, name, sub=sub)
+        f.box(282, y, 196, 56, 'ルートテーブル ' + rt, sub=route, kind='soft')
+        f.arrow([(220, y + 28), (280, y + 28)])
+    f.text(251, 14, '関連付け', cls='fg-m', anchor='middle')
+    f.box(540, 20, 196, 56, 'インターネットゲートウェイ', sub='インターネットへ', kind='acc')
+    f.box(540, 98, 196, 56, 'NATゲートウェイ', sub='パブリックサブネットに置く')
+    f.box(540, 176, 196, 56, '外部への経路なし', kind='dash')
+    f.arrow([(478, 48), (538, 48)])
+    f.arrow([(478, 126), (538, 126)])
+    f.arrow([(478, 204), (538, 204)], dashed=True, head=False)
+    f.arrow([(638, 98), (638, 78)])
+    return f
+
+def heal():
+    f = Fig('heal', 760, 268, 'ALBが異常と判断したサーバーを、Auto Scalingが入れ替える')
+    f.box(24, 84, 150, 60, 'ALB', sub='ヘルスチェック', bold=True)
+    f.box(300, 24, 190, 48, 'サーバーA（正常）')
+    f.box(300, 110, 190, 48, 'サーバーB（応答なし）', kind='dash')
+    f.box(300, 200, 190, 48, '新しいサーバー', kind='acc')
+    f.box(566, 92, 170, 84, 'Auto Scaling', kind='soft', lines=['台数を保つ', '異常なら入れ替える'])
+    f.arrow([(174, 100), (236, 100), (236, 48), (298, 48)])
+    f.text(184, 40, '①定期的に確認', cls='fg-m')
+    f.arrow([(174, 128), (236, 128), (236, 134), (298, 134)], dashed=True)
+    f.text(184, 162, '②失敗が続く', cls='fg-m')
+    f.arrow([(566, 134), (492, 134)])
+    f.text(529, 126, '③終了', cls='fg-m', anchor='middle')
+    f.arrow([(651, 176), (651, 224), (492, 224)])
+    f.text(574, 216, '④起動テンプレートから作る', cls='fg-m', anchor='middle')
+    f.arrow([(300, 224), (99, 224), (99, 146)])
+    f.text(200, 244, '⑤登録して、振り分けを再開', cls='fg-m', anchor='middle')
+    return f
+
+def dbsecret():
+    f = Fig('dbsecret', 760, 212, 'サーバーは、ロールの権限で接続情報を取り出す。人もコードも、パスワードを知らない')
+    f.box(24, 76, 170, 60, 'アプリサーバー', sub='IAMロールで動く', bold=True)
+    f.box(300, 20, 200, 56, 'Secrets Manager', sub='接続情報を保管する', kind='acc')
+    f.box(300, 136, 200, 56, 'データベース（RDS）', sub='アプリからの通信だけ許可')
+    f.box(566, 76, 170, 60, 'コード、設定、手順書', sub='パスワードを書かない', kind='dash')
+    f.arrow([(194, 94), (246, 94), (246, 48), (298, 48)])
+    f.text(204, 40, '①取り出す', cls='fg-m')
+    f.arrow([(194, 118), (246, 118), (246, 164), (298, 164)])
+    f.text(204, 186, '②接続する', cls='fg-m')
+    f.arrow([(400, 134), (400, 78)])
+    f.text(410, 110, 'RDSが生成して、保管する', cls='fg-m')
+    return f
+
+def alarmflow():
+    f = flow5('alarmflow', '指標から通知、調査、記録までを、1つの流れとして作る。結果は、監視の見直しに返す', [
+        (26, '指標を集める', ['応答時間、エラー', '正常な台数'], 'box'), (172, 'しきい値で判定', ['アラームが', '状態を変える'], 'box'),
+        (318, '通知する', ['SNSから', 'メールなどへ'], 'box'), (464, '人が調べる', ['ログ、指標', '操作の記録'], 'acc'),
+        (610, '記録して防ぐ', ['障害報告書', '再発防止'], 'box')], height=150)
+    f.arrow([(672, 88), (672, 118), (88, 118), (88, 90)])
+    f.text(380, 138, '監視する項目と、しきい値を見直す', cls='fg-m', anchor='middle')
+    return f
+
+def serverless():
+    f = Fig('serverless', 760, 190, '依頼は、認証と流量の制限を通ってから、関数に届く')
+    f.box(20, 40, 130, 60, '呼び出す人', sub='署名を付ける')
+    f.box(200, 40, 170, 60, 'API Gateway', sub='IAM認証、流量の制限', kind='acc', bold=True)
+    f.box(420, 40, 140, 60, 'Lambda関数', sub='入力を検証する')
+    f.box(610, 40, 130, 60, 'DynamoDB', sub='テーブル')
+    f.arrow([(150, 70), (198, 70)])
+    f.arrow([(370, 70), (418, 70)])
+    f.arrow([(560, 70), (608, 70)])
+    f.arrow([(285, 100), (285, 136)], dashed=True)
+    f.text(285, 154, '署名がなければ 403', cls='fg-m', anchor='middle')
+    f.text(285, 170, '多すぎれば 429', cls='fg-m', anchor='middle')
+    f.arrow([(490, 100), (490, 136)])
+    f.box(420, 138, 140, 36, 'CloudWatch Logs', kind='soft')
+    f.text(675, 122, '実行ロールで、この', cls='fg-m', anchor='middle')
+    f.text(675, 138, 'テーブルだけを操作', cls='fg-m', anchor='middle')
+    return f
+
+def cicd():
+    f = flow5('cicd', 'pushから反映までを自動で進める。認証には、保存したアクセスキーを使わない', [
+        (26, 'コードをpush', ['GitHubの', 'リポジトリ'], 'box'), (172, 'テスト', ['失敗したら', 'ここで止まる'], 'box'),
+        (318, 'イメージを作る', ['一意のタグで', 'ECRに保存'], 'box'), (464, '承認', ['本番への反映を', '人が確認'], 'box'),
+        (610, 'デプロイ', ['ECSが少しずつ', '入れ替える'], 'acc')], height=138)
+    f.line(26, 104, 734, 104)
+    f.text(380, 124, 'GitHub Actions は、OIDCで一時的な権限を受け取る（アクセスキーを保存しない）', cls='fg-m', anchor='middle')
+    return f
+
+def migflow():
+    f = flow5('migflow', '移行は、リハーサルで手順と時間を固めてから、切り替える', [
+        (26, '棚卸し', ['構成、使用率', 'つながり'], 'box'), (172, '計画', ['順番、方式', '判断の基準'], 'box'),
+        (318, 'リハーサル', ['通しで練習し', '時間を測る'], 'acc'), (464, '切り替え', ['止める、写す', '確かめる'], 'box'),
+        (610, '廃止と改善', ['旧環境を止め', '大きさを見直す'], 'box')], height=186)
+    f.arrow([(380, 88), (380, 116), (234, 116), (234, 90)])
+    f.text(307, 134, '問題と時間を、計画に反映する', cls='fg-m', anchor='middle')
+    f.arrow([(526, 88), (526, 156), (200, 156), (200, 90)], dashed=True)
+    f.text(363, 174, '基準を満たさなければ、期限までに切り戻して、計画からやり直す', cls='fg-m', anchor='middle')
+    return f
+
+def k8sobj():
+    f = Fig('k8sobj', 760, 262, 'Deployment がPodの数を保ち、Service が変わらない宛先になる')
+    f.box(24, 96, 170, 60, 'Deployment', sub='replicas: 2', kind='acc', bold=True)
+    f.box(262, 20, 236, 92, kind='zone')
+    f.text(276, 40, 'ノード1', cls='fg-m')
+    f.box(300, 50, 160, 48, 'Pod', sub='app: web')
+    f.box(262, 132, 236, 92, kind='zone')
+    f.text(276, 152, 'ノード2', cls='fg-m')
+    f.box(300, 162, 160, 48, 'Pod', sub='app: web')
+    f.box(566, 96, 170, 60, 'Service（web）', sub='ラベルで宛先を選ぶ', bold=True)
+    f.arrow([(194, 112), (236, 112), (236, 74), (298, 74)])
+    f.arrow([(194, 140), (236, 140), (236, 186), (298, 186)])
+    f.text(109, 84, '作る、数を保つ', cls='fg-m', anchor='middle')
+    f.arrow([(566, 112), (526, 112), (526, 74), (462, 74)])
+    f.arrow([(566, 140), (526, 140), (526, 186), (462, 186)])
+    f.text(651, 84, '通信を届ける', cls='fg-m', anchor='middle')
+    f.text(380, 250, 'コントロールプレーンが、宣言と実際の状態の差を埋め続ける', cls='fg-m', anchor='middle')
+    return f
+
+FIG_FUNCS = [levels, stack4, az, resp, share, vpc, web3, buildmap, designflow, dr4, iameval, reqpath, org, tgw, deploy, rag, pipeline,
+             s3cf, routes, heal, dbsecret, alarmflow, serverless, cicd, migflow, k8sobj]
 
 def all_figs():
     out = {}
