@@ -29,7 +29,9 @@
 | `tools/manifest.py` | 部と章の並び、章の題名、目安の時間、前提の章 |
 | `tools/figs.py` | 図の定義。図は、ここからSVGとして作られる |
 | `tools/build.py` | 原稿からHTMLと同じサイト内のCSS・JavaScriptファイルを作る |
+| `labs/k8s/` | 第31章の実習（手元のKubernetes）のファイルと、最初から最後まで通して確かめるスクリプト |
 | `.github/workflows/deploy.yml` | PR・pushを検証し、手動実行と公開承認でPagesへ反映する |
+| `.github/workflows/k8s-lab.yml` | 第31章の実習を、実際のクラスター（kind）で動かして確かめる |
 
 ## 手元でページを作る
 

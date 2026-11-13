@@ -1,0 +1,8 @@
+# 手元のPCの中に作る、実習用のクラスター。Dockerのコンテナ1つが、ノード1台になる
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: cloudbook
+nodes:
+  - role: control-plane
+  - role: worker
+  - role: worker
