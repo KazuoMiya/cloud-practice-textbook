@@ -29,7 +29,9 @@
 | `tools/manifest.py` | 部と章の並び、章の題名、目安の時間、前提の章 |
 | `tools/figs.py` | 図の定義。図は、ここからSVGとして作られる |
 | `tools/build.py` | 原稿からHTMLと同じサイト内のCSS・JavaScriptファイルを作る |
+| `labs/migration/` | 第29章の実習（移行のリハーサル）のファイルと、最初から最後まで通して確かめるスクリプト |
 | `.github/workflows/deploy.yml` | PR・pushを検証し、手動実行と公開承認でPagesへ反映する |
+| `.github/workflows/migration-lab.yml` | 第29章の実習を、Docker Compose で実際に動かして確かめる |
 
 ## 手元でページを作る
 
