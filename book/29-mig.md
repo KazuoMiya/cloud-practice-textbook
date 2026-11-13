@@ -2,6 +2,7 @@
 - 既存のシステムを、7つの移行戦略に当てはめて仕分けできる
 - 棚卸しから切り替えまでの流れを計画し、切り戻しの条件を決められる
 - データの転送にかかる時間を概算し、移し方を選べる
+- 手元の環境で、リハーサル、切り替え、切り戻しを通し、判断の基準を自分で決められる
 :::
 
 新しく作るシステムより、すでにあるシステムをクラウドへ移す案件のほうが、数は多くあります。移行は、技術の問題である前に、段取りの問題です。動いている業務を止めずに、何を、どの順で、どう移し、問題があればどう戻すか。この章では、その考え方を扱います。
@@ -33,6 +34,8 @@ AWSは、移行を3つの段階で説明しています。
 | 評価 | 現状の棚卸し。移行の目的と効果の整理。大まかな費用の比較 | 移行する理由と、経営の合意 |
 | 準備 | 土台（{{ch:org}}のランディングゾーン、{{ch:xnet}}のネットワーク）の用意。体制と技能の準備。数システムでの試行 | 詳細な計画と、移行の型 |
 | 移行と最新化 | システムを、まとまりごとに順に移す。移した後に最適化する | 移行の完了と、旧環境の廃止 |
+
+{{fig:migflow|移行の流れ。リハーサルの結果を、計画に返す}}
 
 ### 棚卸しで調べること
 
@@ -87,6 +90,148 @@ AWSは、移行を3つの段階で説明しています。
 :::warn 旧環境を消すまでが移行
 切り替えが終わると、関心は次のシステムに移りがちです。しかし、旧環境の機器、回線、ライセンス、保守の契約を止めない限り、費用は二重にかかり続けます。「戻せる期間」が過ぎたら、旧環境のデータの保管と消去、契約の終了までを、計画に含めて実行します。
 :::
+
+## 手元で通す：移行のリハーサル
+
+移行の段取りは、手元のPCで、費用をかけずに練習できます。ここでは、サポートが終わった版のデータベース（旧環境）から、新しい版のデータベース（新環境）へ、データを移して切り替えるまでを、通しで行います。規模は小さくても、棚卸し、リハーサル、書き込みの停止、最後の写し、判断の基準、切り戻しという流れは、本番の移行と同じです。
+
+実習に使うファイルは、この本のリポジトリの [labs/migration](https://github.com/KazuoMiya/cloud-practice-textbook/tree/main/labs/migration) にあります。この節の手順は、変更のたびに、最初から最後まで動かして確かめています。
+
+| 項目 | 旧環境（old-db） | 新環境（new-db） |
+|---|---|---|
+| データベース | PostgreSQL 13（サポートが終わった版） | PostgreSQL 17 |
+| 入っているもの | 顧客50件、注文2,000件、集計用のビュー | 空 |
+
+### 準備
+
+Dockerを使います。`docker compose version` が表示されれば、準備はできています。旧環境と新環境は、PCの中だけで動き、外からは接続できません。
+
+```bash
+cd labs/migration
+docker compose up -d --wait
+```
+
+### 棚卸し
+
+移す前に、旧環境に何があるかを調べます。
+
+```bash
+docker compose exec -T old-db psql -U postgres -d shop -c 'select version()'
+docker compose exec -T old-db psql -U postgres -d shop -c '\dt+'
+docker compose exec -T old-db psql -U postgres -d shop -f /checks.sql
+```
+
+3つ目は、切り替えの「判断の基準」にする値を、まとめて表示します。件数だけでなく、金額の合計と、IDの採番の現在値を含めています。何を確かめれば合格とするかは、当日ではなく、この時点で決めておきます。
+
+```sql
+-- labs/migration/checks.sql
+-- 切り替えの判断に使う値。旧環境と新環境で実行し、出力が一致することを確かめる
+select 1 as no, 'customers の件数' as item, count(*)::text as value from customers
+union all select 2, 'orders の件数', count(*)::text from orders
+union all select 3, 'orders の金額の合計', sum(amount)::text from orders
+union all select 4, 'orders の最大のID', max(id)::text from orders
+union all select 5, 'orders のIDの採番の現在値', last_value::text from orders_id_seq
+union all select 6, '顧客ごとの集計（ビュー）の件数', count(*)::text from customer_totals
+order by no;
+```
+
+### リハーサル
+
+本番と同じ手順で、一度写してみます。
+
+```bash
+time docker compose exec -T new-db pg_dump -h old-db -U postgres -d shop | docker compose exec -T new-db psql -U postgres -d shop -v ON_ERROR_STOP=1 -q -o /dev/null
+```
+
+- 新環境のコンテナに入っている、新しい版の `pg_dump` で、旧環境から取り出している。版を上げる移行では、新しい版の道具で取り出すのが基本である
+- `time` で、かかった時間を測っている。ここでは一瞬で終わるが、本番のデータ量でかかる時間は、リハーサルで測るしかない。毎回、記録する
+- `ON_ERROR_STOP=1` は、エラーが1つでも出たら、そこで止める指定。途中のエラーを見落としたまま、先へ進まないようにする
+
+写したら、旧環境と新環境で、判断の基準の値を比べます。何も表示されなければ、一致しています。
+
+```bash
+diff <(docker compose exec -T old-db psql -U postgres -d shop -At -f /checks.sql) \
+     <(docker compose exec -T new-db psql -U postgres -d shop -At -f /checks.sql)
+```
+
+### 写しは、古くなる
+
+リハーサルの後も、旧環境では業務が続きます。注文を5件足してから、もう一度比べてください。
+
+```bash
+docker compose exec -T old-db psql -U postgres -d shop -c "insert into orders (customer_id, amount) select 1 + (n % 50), 1000 from generate_series(1, 5) as n"
+```
+
+今度は、差が表示されます。写したデータは、写した瞬間のものです。そのため、切り替えの当日には、「書き込みを止めてから、最後の写しを取る」手順が要ります。止める時間を短くしたい場合は、前の節の表にある、変更を継続して反映し続ける方法を使います。
+
+### 切り替え
+
+```bash
+# 1. 旧環境への書き込みを止める
+docker compose exec -T old-db psql -U postgres -d shop -c 'alter database shop set default_transaction_read_only = on'
+# 2. 止まったことを確かめる（エラーになれば、止まっている）
+docker compose exec -T old-db psql -U postgres -d shop -c "insert into orders (customer_id, amount) values (1, 100)"
+# 3. 新環境を作り直して、最後の写しを取る
+docker compose exec -T new-db dropdb -U postgres shop
+docker compose exec -T new-db createdb -U postgres shop
+time docker compose exec -T new-db pg_dump -h old-db -U postgres -d shop | docker compose exec -T new-db psql -U postgres -d shop -v ON_ERROR_STOP=1 -q -o /dev/null
+# 4. 判断の基準を確かめる（何も表示されなければ、一致）
+diff <(docker compose exec -T old-db psql -U postgres -d shop -At -f /checks.sql) \
+     <(docker compose exec -T new-db psql -U postgres -d shop -At -f /checks.sql)
+# 5. 新環境で、新しい注文を受け付けられることを確かめる
+docker compose exec -T new-db psql -U postgres -d shop -c "insert into orders (customer_id, amount) values (1, 100) returning id"
+```
+
+- 2は、`cannot execute INSERT in a read-only transaction` というエラーになる。この設定が効くのは、新しく始まる接続からである。本番では、アプリを止める、残っている接続を切る、といった手順と組み合わせる
+- 5で返るIDは、2006になる。旧環境の最後の注文（2005）の、続きの番号である。IDの採番の現在値まで移っていなければ、ここで番号が重なり、エラーになる。判断の基準に、件数だけでなく採番の値を入れておくのは、このためである
+
+### 切り戻しの練習
+
+切り替えの後に問題が見つかり、旧環境に戻す場合を練習します。旧環境の書き込みを再開し、注文を1件受け付けてから、もう一度比べます。1行目は、接続先が `shop` ではなく `postgres` になっています。読み取り専用にしたデータベースに接続したままでは、その設定を解除できないためです。戻す手順も、リハーサルで一度通しておかないと、当日にこうした点でつまずきます。
+
+```bash
+docker compose exec -T old-db psql -U postgres -d postgres -c 'alter database shop reset default_transaction_read_only'
+docker compose exec -T old-db psql -U postgres -d shop -c "insert into orders (customer_id, amount) values (2, 200) returning id"
+diff <(docker compose exec -T old-db psql -U postgres -d shop -At -f /checks.sql) \
+     <(docker compose exec -T new-db psql -U postgres -d shop -At -f /checks.sql)
+```
+
+差が表示されます。新環境で受け付けた注文（金額100）は、旧環境にありません。しかも、旧環境で新しく受け付けた注文にも、同じ2006というIDが付きます。同じ番号の、別の注文が、2つの環境にできたことになります。
+
+これが、「切り替える」の節の表にある「戻した場合のデータ」の問題です。新環境で受け付けた更新をどう扱うか、何時までなら戻せるかは、切り替えの前に決めておきます。当日に考え始めても、間に合いません。
+
+### 片付け
+
+```bash
+docker compose down -v
+```
+
+### 実技の合格基準
+
+次のすべてを、コマンドの出力と、書いた文書で示せたら合格です。
+
+| 番号 | 確かめること | 合格の状態 |
+|---|---|---|
+| 1 | 棚卸しができる | 旧環境の版、テーブル、件数、採番の現在値を、出力で示せる |
+| 2 | リハーサルができる | 写しにかかった時間を記録している。判断の基準の値が、新旧で一致している |
+| 3 | 切り替えができる | 書き込みが止まったことを確かめてから、最後の写しを取っている。基準の値が一致し、新環境の新しい注文のIDが、続きの番号になっている |
+| 4 | 切り戻しの影響を説明できる | 旧環境に戻すと、何が失われ、何が食い違うかを、出力を示して説明できる |
+| 5 | 手順書を書ける | 切り替えの作業手順書に、事前の確認、手順ごとの期待する結果、切り戻しの条件と期限が書かれている |
+| 6 | 片付けが済んでいる | `docker compose ps` に、何も表示されない |
+
+提出するもの：1〜4の出力、記録した時間、切り替えの作業手順書。
+
+### AWSの移行サービスとの対応
+
+この実習で行ったことは、本番の移行では、次の仕組みに当たります。AWSの上で試す場合は、複製用のサーバーや保存領域、移行先のデータベースに費用がかかります。試すかどうかは任意とし、試した日のうちに消してください。
+
+| この実習で行ったこと | 本番で使う仕組み |
+|---|---|
+| 棚卸し | 実際の通信と使用率を記録して調べる。AWS Application Discovery Service など |
+| 止めて、写す | データベースに付属する道具（`pg_dump` など）。止められる時間が長い場合に使う |
+| 止める時間を短くする | AWS Database Migration Service で、変更を継続して反映し続ける |
+| サーバーごと移す | AWS Application Migration Service（MGN）。移行元のサーバーにエージェントを入れ、ディスクの内容を複製し続ける。試験用に起動して確かめてから、切り替える |
+| 向け先を切り替える | DNSの切り替え。TTLを、数日前から短くしておく |
 
 ## 移した後に、良くしていく
 
