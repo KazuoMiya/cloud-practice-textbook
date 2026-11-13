@@ -60,5 +60,95 @@ class ApiExampleTest(unittest.TestCase):
             compile(source, f'chapter17-example-{i}', 'exec')
 
 
+class CallApiScriptTest(unittest.TestCase):
+    """The signing client must send the body it is given and show error responses instead of crashing."""
+
+    def run_script(self, argv, status=200):
+        import io
+        import urllib.error
+        source = re.findall(r'```python\n(.*?)\n```', SOURCE.read_text(), re.S)[1]
+        source = source.replace('https://API_ID.', 'https://abc123.')
+        sent = {}
+
+        class Credentials:
+            def get_frozen_credentials(self):
+                return object()
+
+        class FakeRequest:
+            def __init__(self, method, url, data, headers):
+                self.headers = dict(headers)
+
+        class FakeSigner:
+            def __init__(self, credentials, service, region):
+                pass
+
+            def add_auth(self, request):
+                request.headers['Authorization'] = 'signed'
+
+        class Response:
+            def __init__(self):
+                self.status = status
+
+            def read(self):
+                return b'{}'
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+        class Opener:
+            def open(self, request, timeout):
+                sent['method'] = request.get_method()
+                sent['body'] = request.data
+                sent['auth'] = request.headers.get('Authorization')
+                if status >= 400:
+                    raise urllib.error.HTTPError(request.full_url, status, 'error', {}, io.BytesIO(b'{"error":"x"}'))
+                return Response()
+
+        modules = {
+            'boto3': types.SimpleNamespace(Session=lambda: types.SimpleNamespace(get_credentials=Credentials)),
+            'botocore': types.SimpleNamespace(),
+            'botocore.auth': types.SimpleNamespace(SigV4Auth=FakeSigner),
+            'botocore.awsrequest': types.SimpleNamespace(AWSRequest=FakeRequest),
+        }
+        out = io.StringIO()
+        with patch.dict('sys.modules', modules), patch('sys.argv', ['call_api.py', *argv]), \
+                patch('urllib.request.build_opener', lambda *handlers: Opener()), patch('sys.stdout', out):
+            exec(compile(source, 'call_api.py', 'exec'), {'__name__': '__main__'})
+        return sent, out.getvalue()
+
+    def test_posts_the_given_body_and_prints_error_codes(self):
+        for body in ['{"text": ', '{"text": "   "}', json.dumps({'text': 'あ' * 201}, ensure_ascii=False)]:
+            with self.subTest(body=body[:20]):
+                sent, out = self.run_script(['POST', body], status=400)
+                self.assertEqual(sent['body'], body.encode('utf-8'))
+                self.assertEqual(sent['method'], 'POST')
+                self.assertEqual(sent['auth'], 'signed')
+                self.assertTrue(out.startswith('400 '))
+
+    def test_default_post_and_get(self):
+        sent, out = self.run_script(['POST'], status=201)
+        self.assertEqual(json.loads(sent['body'])['text'], '学習用の架空のメモ')
+        self.assertTrue(out.startswith('201 '))
+        sent, _ = self.run_script([])
+        self.assertEqual(sent['method'], 'GET')
+        self.assertIsNone(sent['body'])
+
+    def test_rejects_wrong_arguments(self):
+        for argv in [['DELETE'], ['GET', 'x'], ['POST', 'a', 'b']]:
+            with self.subTest(argv=argv), self.assertRaises(SystemExit):
+                self.run_script(argv)
+
+    def test_the_bodies_in_the_chapter_are_rejected_by_the_handler(self):
+        handler_test = ApiExampleTest('test_valid_post_and_get')
+        handler_test.setUp()
+        for body in ['{"text": ', '{"text": "   "}', json.dumps({'text': 'あ' * 201}, ensure_ascii=False)]:
+            self.assertEqual(handler_test.call('POST', body)['statusCode'], 400)
+        self.assertEqual(handler_test.call('POST', '{"text": "学習用の架空のメモ"}')['statusCode'], 201)
+        self.assertIn("printf 'あ%.0s' $(seq 201)", SOURCE.read_text())
+
+
 if __name__ == '__main__':
     unittest.main()

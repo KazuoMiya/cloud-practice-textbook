@@ -45,7 +45,9 @@ terraform destroy
 
 CIは、実際のAWSアカウントに資源を作りません。`apply` が最後まで通ること、作られた資源が本文の説明どおりに動くことは、[VERIFY.md](VERIFY.md) の手順で、人が確かめます。Terraformやプロバイダーの版を上げたときも、同じ確認をしてください。
 
-検証した版は、Terraform 1.17.2、AWSプロバイダー 6.72.0（`.terraform.lock.hcl` に記録）です。
+CIで検査している版は、Terraform 1.17.2、AWSプロバイダー 6.72.0（`.terraform.lock.hcl` に記録）です。
+
+実際のアカウントでの確認：未実施（2026年11月13日時点）。VERIFY.md の手順で確かめたら、日付、確かめた人、版を、ここに書きます。
 
 ## 利用の条件
 
