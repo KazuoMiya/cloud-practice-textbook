@@ -181,7 +181,7 @@ class ChapterMatchesLabTest(unittest.TestCase):
         return blocks[0].strip()
 
     def test_printed_files_are_the_lab_files(self):
-        for name in ['app/Dockerfile', 'workflow/app-delivery.yml']:
+        for name in ['app/Dockerfile', 'workflow/app-delivery.yml', 'render-taskdef.jq']:
             body = (LAB / name).read_text(encoding='utf-8').strip()
             body = '\n'.join(line for line in body.splitlines() if not line.startswith('# 第19章'))
             self.assertEqual(self.printed(f'labs/delivery/{name}'), body.strip(), name)
