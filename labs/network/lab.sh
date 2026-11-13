@@ -131,8 +131,9 @@ bgp() {
   ip netns exec web-prod ip route add default via 10.210.1.254
   web web-prod
   # 2台のルーターで、経路を交換するソフトウェア（FRR）を動かす。設定は /etc/frr/<機器の名前>/frr.conf
-  /usr/lib/frr/frrinit.sh start router-office
-  /usr/lib/frr/frrinit.sh start hub
+  # 起動時の表示は /var/log/frr/start.log に残す
+  /usr/lib/frr/frrinit.sh start router-office > /var/log/frr/start.log 2>&1
+  /usr/lib/frr/frrinit.sh start hub >> /var/log/frr/start.log 2>&1
   echo '回線2本とBGPの構成を作りました。機器： pc dns-office router-office hub web-prod'
 }
 

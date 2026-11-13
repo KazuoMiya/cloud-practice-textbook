@@ -126,6 +126,8 @@ established() { run router-office ip route show 10.210.1.0/24 | grep -q 'via 192
 both_paths() { [ "$(run vtysh -N router-office -c 'show ip bgp 10.210.1.0/24' | grep -c '^  *192\.168\.255\.[26] from')" = 2 ]; }
 retry 60 established || fail "BGPで受け取った経路が、wan1 を通る形で入らない"
 retry 30 both_paths || fail "router-office が、2本の回線の両方から経路を受け取っていない"
+best_is_wan1() { run vtysh -N router-office -c 'show ip bgp 10.210.1.0/24' | grep -A1 '192\.168\.255\.2 from' | grep -q 'localpref 200.*best'; }
+retry 30 best_is_wan1 || fail "router-office が、wan1 からの経路を最良に選んでいない"
 run vtysh -N router-office -c 'show bgp summary'
 run vtysh -N router-office -c 'show ip bgp'
 run router-office ip route
@@ -137,14 +139,15 @@ sleep 3
 run lab cut wan1
 wait || true
 tail -n 3 "$cap"
-loss=$(grep -o '[0-9]*% packet loss' "$cap" | grep -o '^[0-9]*' || true)
-[ -n "$loss" ] || fail "ping の結果を読み取れない"
-[ "$loss" -gt 0 ] || fail "回線を切ったのに、1つも失われていない"
-[ "$loss" -lt 70 ] || fail "回線を切った後、wan2 に切り替わっていない（失われた割合 ${loss}%）"
+received=$(sed -n 's/.* \([0-9][0-9]*\) received.*/\1/p' "$cap")
+[ -n "$received" ] || fail "ping の結果を読み取れない"
+lost=$((60 - received))
+[ "$lost" -gt 0 ] || fail "回線を切ったのに、1つも失われていない"
+[ "$lost" -lt 40 ] || fail "回線を切った後、wan2 に切り替わっていない（60回のうち ${lost}回が失われた）"
 run router-office ip route show 10.210.1.0/24 | grep -q 'via 192.168.255.6 ' || fail "切り替わった後の経路が、wan2 を通っていない"
 run vtysh -N router-office -c 'show bgp summary'
 run pc ping -c 2 -W 1 10.210.1.10 || fail "wan2 に切り替わった後、届かない"
-echo "失われた割合 ${loss}%（60回のうち。0.2秒おき）"
+echo "60回のうち ${lost}回が失われた（0.2秒おきなので、途切れたのは約 $((lost / 5)) 秒）"
 
 say "13. wan1 を戻す：自動で、元の経路に戻る"
 run lab restore wan1
