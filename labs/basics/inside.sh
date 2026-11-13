@@ -37,7 +37,7 @@ echo '== 第6章：HTTP'
 
   echo '== 第6章：拒否と時間切れ'
   fails 7 '待ち受けていないポートは、すぐに拒否される' curl -sS http://127.0.0.1:8081/
-  contains '拒否のメッセージ' '[Cc]onnection refused|[Cc]ouldn.t connect' /tmp/fails.out
+  contains '拒否は待たずに返る' 'after [0-9] ms' /tmp/fails.out
   started=$SECONDS
   fails 28 'どこにも届かない宛先は、時間切れになる' curl -sS --connect-timeout 5 http://192.0.2.10/
   [ $((SECONDS - started)) -ge 4 ] || fail '時間切れまで待っていない'
