@@ -1,0 +1,42 @@
+name: Migration lab
+
+on:
+  pull_request:
+    paths:
+      - labs/migration/**
+      - book/29-mig.md
+      - .github/workflows/migration-lab.yml
+  push:
+    branches: [main]
+    paths:
+      - labs/migration/**
+      - book/29-mig.md
+      - .github/workflows/migration-lab.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migration-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rehearsal:
+    name: Migration rehearsal with Docker Compose
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Tool versions
+        run: |
+          docker version --format 'docker {{.Server.Version}}'
+          docker compose version
+      - name: Check the script
+        run: |
+          bash -n labs/migration/verify.sh
+          shellcheck labs/migration/verify.sh
+      - name: Run the rehearsal from start to finish
+        run: bash labs/migration/verify.sh
