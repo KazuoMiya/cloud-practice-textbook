@@ -160,7 +160,7 @@ DNSは、名前に対する情報を、レコードという単位で持って�
 ここまでの内容を、自分の手で確かめます。練習の場所は、AWS CloudShell（AWSの画面から使える、無料のLinuxの環境）か、Dockerで動かす Amazon Linux 2023 のコンテナです。どちらも料金はかかりません。Linuxの操作に慣れていない場合は、先に{{ch:basics}}を読んでください。
 
 ```bash
-# Dockerの場合：練習用のコンテナに入る（CloudShell なら、この2行は要らない）
+# Dockerの場合：練習用のコンテナに入る（CloudShell なら1行目は要らず、2行目の先頭に sudo を付ける）
 docker run --rm -it public.ecr.aws/amazonlinux/amazonlinux:2023 bash
 dnf install -y bind-utils openssl iproute procps-ng python3
 ```
