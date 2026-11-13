@@ -131,6 +131,7 @@
 - [Savings Plans とは](https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html)（AWS）
 - [Savings Plans の種類](https://docs.aws.amazon.com/savingsplans/latest/userguide/plan-types.html)（AWS。種類ごとの対象と割引の上限）
 - [Database Savings Plans の開始](https://aws.amazon.com/about-aws/whats-new/2025/12/database-savings-plans-savings)（AWS、2025年12月）
+- [Database Savings Plans の料金](https://aws.amazon.com/savingsplans/database-pricing/)（AWS。サービスと実行方式ごとの割引率）
 
 移行、運用、コンテナ、データとAI
 

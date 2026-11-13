@@ -1,5 +1,11 @@
 data "aws_availability_zones" "available" {
   state = "available"
+
+  # Local Zone など、別に申し込みが要る場所は除く
+  filter {
+    name   = "opt-in-status"
+    values = ["opt-in-not-required"]
+  }
 }
 
 # アドレス設計。第13章の表と同じ内容を、1か所にまとめて書く
