@@ -62,8 +62,8 @@ def check():
     for fragment in parser.fragments:
         if fragment not in parser.ids:
             errors.append('broken internal link: ' + fragment)
-    if len(parser.chapters) != 46:
-        errors.append('expected 46 chapters')
+    if len(parser.chapters) != 47:
+        errors.append('expected 47 chapters')
     visible = [a['id'] for a in parser.chapters if 'hidden' not in a]
     if visible != ['guide']:
         errors.append('initial rendering must contain only the guide')

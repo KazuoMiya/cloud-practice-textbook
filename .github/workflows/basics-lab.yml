@@ -1,0 +1,44 @@
+name: Basics lab
+
+on:
+  pull_request:
+    paths:
+      - labs/basics/**
+      - book/06-net.md
+      - book/F-basics.md
+      - tests/test_basics_lab.py
+      - .github/workflows/basics-lab.yml
+  push:
+    branches: [main]
+    paths:
+      - labs/basics/**
+      - book/06-net.md
+      - book/F-basics.md
+      - tests/test_basics_lab.py
+      - .github/workflows/basics-lab.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: basics-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  basics:
+    name: Chapter 6 and appendix F commands on Amazon Linux 2023
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check the scripts
+        run: |
+          bash -n labs/basics/verify.sh labs/basics/inside.sh
+          shellcheck labs/basics/verify.sh labs/basics/inside.sh
+      - name: The book prints only commands the script runs
+        run: python3 -m unittest tests.test_basics_lab -v
+      - name: Run every command from start to finish
+        run: bash labs/basics/verify.sh
