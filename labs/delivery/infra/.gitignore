@@ -1,0 +1,15 @@
+# プロバイダーの実行ファイル（terraform init で取得し直せる）
+.terraform/
+
+# ステート。資源のIDなどの情報を含むため、Gitに追加しない
+*.tfstate
+*.tfstate.*
+
+# 環境ごとの値
+terraform.tfvars
+*.auto.tfvars
+
+# 保存した実行計画と、異常終了時の記録
+*.tfplan
+crash.log
+
