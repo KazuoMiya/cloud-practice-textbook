@@ -1,0 +1,67 @@
+name: Delivery lab
+
+on:
+  pull_request:
+    paths:
+      - labs/delivery/**
+      - book/19-s8.md
+      - tests/test_delivery_lab.py
+      - .github/workflows/delivery-lab.yml
+  push:
+    branches: [main]
+    paths:
+      - labs/delivery/**
+      - book/19-s8.md
+      - tests/test_delivery_lab.py
+      - .github/workflows/delivery-lab.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: delivery-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  container:
+    name: Build and run the chapter 19 container
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: labs/delivery
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Unit tests of the app (the same command the chapter's workflow runs)
+        run: make -C app test
+      - name: Check the scripts
+        run: |
+          bash -n deploy.sh rollback.sh
+          shellcheck deploy.sh rollback.sh
+      - name: Build the image as deploy.sh does
+        run: docker build --platform linux/amd64 --build-arg APP_VERSION=ci-${{ github.sha }} -t cloudbook-app:ci app
+      - name: The image runs as a non-root user and holds only the app
+        run: |
+          test "$(docker image inspect cloudbook-app:ci --format '{{.Config.User}}')" = 1000
+          docker run --rm --entrypoint ls cloudbook-app:ci -A /app | tee /tmp/files
+          test "$(tr '\n' ' ' < /tmp/files)" = "app.py requirements.txt "
+      - name: Run it with a read-only filesystem, as the task definition does
+        run: |
+          docker run -d --name app --read-only -p 8080:8080 cloudbook-app:ci
+          for _ in $(seq 30); do curl -fsS http://localhost:8080/health && break; sleep 1; done
+          echo
+          test "$(curl -fsS http://localhost:8080/health)" = ok
+          curl -fsS http://localhost:8080/ | tee /tmp/page
+          grep -q '第19章の題材のアプリです' /tmp/page
+          grep -q "版：ci-${{ github.sha }}" /tmp/page
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/nothing)" = 404
+          test "$(docker exec app id -u)" = 1000
+      - name: Show the container log
+        if: always()
+        run: docker logs app || true
+      - name: Rehearse deploy.sh and rollback.sh with fake aws and docker commands
+        working-directory: .
+        run: python3 -m unittest tests.test_delivery_lab -v

@@ -127,7 +127,8 @@ def find_data():
 def problems(models, args):
     """Problems of one API command, or None when it is not an API command."""
     service, operation = args[0], (args[1] if len(args) > 1 else None)
-    if service in NOT_API_SERVICES or (service, operation) in NOT_API or operation is None:
+    # Waiters (aws <service> wait <condition>) poll an API operation; they are defined by the CLI
+    if service in NOT_API_SERVICES or (service, operation) in NOT_API or operation in (None, 'wait'):
         return None
     model = models.service(service)
     if model is None:

@@ -14,12 +14,16 @@ concurrency:
 
 jobs:
   terraform:
-    name: Terraform lab checks
+    name: Terraform lab checks (${{ matrix.dir }})
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: [labs/terraform, labs/delivery/infra]
     defaults:
       run:
-        working-directory: labs/terraform
+        working-directory: ${{ matrix.dir }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

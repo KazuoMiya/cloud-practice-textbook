@@ -176,7 +176,13 @@ def chapter_html(i, c):
     key = c['key']
     route = [f'<b>レベル</b><i>→</i>{c["lvname"] or "共通"}']
     if c['mins']:
-        route.append(f'<b>目安</b><i>→</i>{c["mins"]}分')
+        # 第2部のステップの章は、読む時間と、AWSで手を動かす時間が大きく違うため、分けて示す
+        if c['lvname'] == '演習':
+            route.append(f'<b>取り組む目安</b><i>→</i>{c["mins"]}分')
+        elif re.fullmatch(r's\d', c['key']):
+            route.append(f'<b>読む目安</b><i>→</i>{c["mins"]}分（手を動かす時間は別に要る）')
+        else:
+            route.append(f'<b>読む目安</b><i>→</i>{c["mins"]}分')
     if c['pre']:
         route.append('<b>前提</b><i>→</i>' + '・'.join(f'<a href="#{p}">{BYKEY[p]["label"]}</a>' for p in c['pre']))
     mini = ''
