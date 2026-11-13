@@ -121,6 +121,10 @@
 ネットワーク、性能、費用
 
 - [リージョナルNATゲートウェイ](https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateways-regional.html)（Amazon VPC）
+- [VPCピアリングとは](https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html)（Amazon VPC。料金の考え方を含む）
+- [ゲートウェイエンドポイント](https://docs.aws.amazon.com/vpc/latest/privatelink/vpce-gateway.html)（Amazon VPC。料金と、使える範囲）
+- [AWS Transit Gateway の料金](https://aws.amazon.com/transit-gateway/pricing/)（AWS）
+- [FRRouting のドキュメント](https://docs.frrouting.org/)（FRRouting。第28章の実習で使う、BGPのソフトウェア）
 - [Application Load Balancer のトラブルシューティング](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-troubleshooting.html)（Elastic Load Balancing。502、503、504の原因）
 - [Lambda のクォータ](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html)（AWS Lambda）
 - [Amazon SQS のメッセージのクォータ](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/quotas-messages.html)（Amazon SQS）
