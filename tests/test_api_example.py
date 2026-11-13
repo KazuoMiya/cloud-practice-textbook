@@ -14,7 +14,7 @@ class ApiExampleTest(unittest.TestCase):
         self.table = Mock()
         self.table.scan.return_value = {'Items': [{'id': 'sample', 'text': '学習'}]}
         boto3 = types.SimpleNamespace(resource=lambda _: types.SimpleNamespace(Table=lambda _: self.table))
-        source = re.findall(r'```python\n(.*?)\n```', SOURCE.read_text(), re.S)[0]
+        source = re.findall(r'```python\n(.*?)\n```', SOURCE.read_text(encoding='utf-8'), re.S)[0]
         self.scope = {}
         with patch.dict('sys.modules', {'boto3': boto3}), patch.dict('os.environ', {'TABLE_NAME': 'test'}):
             exec(compile(source, str(SOURCE), 'exec'), self.scope)
@@ -56,7 +56,7 @@ class ApiExampleTest(unittest.TestCase):
         self.table.put_item.assert_not_called()
 
     def test_every_python_example_compiles(self):
-        for i, source in enumerate(re.findall(r'```python\n(.*?)\n```', SOURCE.read_text(), re.S)):
+        for i, source in enumerate(re.findall(r'```python\n(.*?)\n```', SOURCE.read_text(encoding='utf-8'), re.S)):
             compile(source, f'chapter17-example-{i}', 'exec')
 
 
