@@ -60,7 +60,7 @@ if grep -q 'ICMP echo reply' "$cap"; then fail "web-prod が、経路がない�
 
 say "4. サーバーに戻りの経路を足す：返事は出るが、中継点で止まる"
 run web-prod ip route add default via 10.210.1.254
-capture hub prod 5 >"$cap" &
+capture hub to-prod 5 >"$cap" &
 sleep 1
 out=$(try pc ping -c 2 -W 1 10.210.1.10)
 wait
@@ -82,10 +82,10 @@ say "6. つないだだけでは、本番と検証も通信できてしまう"
 say "7. 中継点の経路表を分けて、本番と検証をつながない"
 run hub ip route add 192.168.210.0/24 via 192.168.255.1 table 101
 run hub ip route add blackhole default table 101
-run hub ip rule add iif prod lookup 101
+run hub ip rule add iif to-prod lookup 101
 run hub ip route add 192.168.210.0/24 via 192.168.255.1 table 102
 run hub ip route add blackhole default table 102
-run hub ip rule add iif dev lookup 102
+run hub ip rule add iif to-dev lookup 102
 run hub ip rule
 run hub ip route show table 101
 [ -z "$(page web-prod http://10.210.2.10/)" ] || fail "経路表を分けたのに、本番から検証へ届く"

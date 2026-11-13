@@ -17,7 +17,7 @@ port=0
 
 node() { # node <機器の名前> <host|router>
   ip netns add "$1"
-  ip netns exec "$1" ip link set lo up
+  ip netns exec "$1" ip link set dev lo up
   # 送信元の検査（rp_filter）は止める。経路がないときの動きを、経路表だけで説明できるようにする
   ip netns exec "$1" sysctl -q -w net.ipv4.conf.all.rp_filter=0 net.ipv4.conf.default.rp_filter=0
   if [ "$2" = router ]; then
@@ -31,16 +31,16 @@ node() { # node <機器の名前> <host|router>
 
 segment() { # segment <名前>：機器をつなぐスイッチを1つ作る
   ip link add "sw-$1" type bridge
-  ip link set "sw-$1" up
+  ip link set dev "sw-$1" up
 }
 
 plug() { # plug <機器> <インターフェースの名前> <アドレス/長さ> <つなぐ先のスイッチ>
   port=$((port + 1))
   ip link add "port$port" type veth peer name "$2" netns "$1"
-  ip link set "port$port" master "sw-$4"
-  ip link set "port$port" up
+  ip link set dev "port$port" master "sw-$4"
+  ip link set dev "port$port" up
   ip netns exec "$1" ip addr add "$3" dev "$2"
-  ip netns exec "$1" ip link set "$2" up
+  ip netns exec "$1" ip link set dev "$2" up
 }
 
 web() { # web <機器>：名前を返すだけのWebサーバーを動かす
@@ -64,7 +64,7 @@ down() {
     ip netns pids "$ns" | xargs -r kill 2> /dev/null || true
     ip netns delete "$ns"
   done
-  for sw in $(ip -o link show type bridge | awk -F': ' '{print $2}'); do ip link delete "$sw"; done
+  for sw in $(ip -o link show type bridge | awk -F': ' '{print $2}'); do ip link delete dev "$sw"; done
   rm -f /run/dns-office.pid /run/dns-cloud.pid
   : > "$FORWARD"
   port=0
@@ -97,8 +97,8 @@ static() {
   node web-dev host
   plug router-office wan1 192.168.255.1/30 wan1
   plug hub wan1 192.168.255.2/30 wan1
-  plug hub prod 10.210.1.254/24 prod
-  plug hub dev 10.210.2.254/24 dev
+  plug hub to-prod 10.210.1.254/24 prod
+  plug hub to-dev 10.210.2.254/24 dev
   plug web-prod eth0 10.210.1.10/24 prod
   plug dns-cloud eth0 10.210.1.53/24 prod
   plug web-dev eth0 10.210.2.10/24 dev
@@ -124,7 +124,7 @@ bgp() {
   plug hub wan1 192.168.255.2/30 wan1
   plug router-office wan2 192.168.255.5/30 wan2
   plug hub wan2 192.168.255.6/30 wan2
-  plug hub prod 10.210.1.254/24 prod
+  plug hub to-prod 10.210.1.254/24 prod
   plug web-prod eth0 10.210.1.10/24 prod
   ip netns exec web-prod ip route add default via 10.210.1.254
   web web-prod
@@ -136,7 +136,7 @@ bgp() {
 
 link_state() { # link_state <wan1|wan2> <up|down>
   case "$1" in
-    wan1 | wan2) ip link set "sw-$1" "$2" ;;
+    wan1 | wan2) ip link set dev "sw-$1" "$2" ;;
     *)
       echo "回線の名前は wan1 か wan2 です" >&2
       exit 1
