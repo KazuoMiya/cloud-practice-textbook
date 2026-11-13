@@ -1,0 +1,14 @@
+# 第28章の実習。1つのコンテナの中に、機器7台分のネットワークを作る。
+name: cloudbook-net
+
+services:
+  lab:
+    build: .
+    image: cloudbook-netlab:1
+    hostname: lab
+    # 中でネットワーク名前空間を作るために、特権が要る。学習用の端末でだけ使う
+    privileged: true
+    # このコンテナ自体は、外のネットワークにつながない
+    network_mode: none
+    init: true
+    stop_grace_period: 1s

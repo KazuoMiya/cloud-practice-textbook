@@ -1,0 +1,42 @@
+name: Network lab
+
+on:
+  pull_request:
+    paths:
+      - labs/network/**
+      - book/28-xnet.md
+      - .github/workflows/network-lab.yml
+  push:
+    branches: [main]
+    paths:
+      - labs/network/**
+      - book/28-xnet.md
+      - .github/workflows/network-lab.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: network-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  network:
+    name: Network lab with Docker Compose
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Tool versions
+        run: |
+          docker version --format 'docker {{.Server.Version}}'
+          docker compose version
+      - name: Check the scripts
+        run: |
+          bash -n labs/network/verify.sh labs/network/lab.sh
+          shellcheck labs/network/verify.sh labs/network/lab.sh
+      - name: Run the lab from start to finish
+        run: bash labs/network/verify.sh
