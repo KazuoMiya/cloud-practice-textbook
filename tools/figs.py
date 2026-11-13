@@ -537,8 +537,33 @@ def k8sobj():
     f.text(380, 250, 'コントロールプレーンが、宣言と実際の状態の差を埋め続ける', cls='fg-m', anchor='middle')
     return f
 
+def netlab():
+    f = Fig('netlab', 760, 300, '第28章の実習で作るネットワーク。社内の端末、DNSサーバー、ルーターが、回線でクラウド側の中継点につながり、その先に本番と検証のネットワークがある')
+    f.box(16, 24, 242, 192, kind='zone')
+    f.text(30, 46, '社内 192.168.210.0/24', bold=True)
+    f.box(28, 70, 98, 50, 'pc', sub='.10', kind='box')
+    f.box(28, 150, 98, 50, 'dns-office', sub='.53', kind='box')
+    f.line(126, 95, 134, 95)
+    f.line(126, 175, 134, 175)
+    f.line(134, 95, 134, 175)
+    f.line(134, 135, 142, 135)
+    f.box(142, 108, 104, 54, 'router-office', sub='.254', kind='box')
+    f.box(400, 108, 90, 54, 'hub', sub='中継点', kind='acc', bold=True)
+    f.arrow([(248, 124), (398, 124)], both=True, label='wan1 192.168.255.0/30', lpos=(323, 114), anchor='middle')
+    f.arrow([(248, 146), (398, 146)], both=True, dashed=True, label='wan2 192.168.255.4/30', lpos=(323, 166), anchor='middle')
+    f.box(560, 24, 184, 156, kind='zone')
+    f.text(574, 46, '本番 10.210.1.0/24', bold=True)
+    f.box(574, 58, 156, 50, 'web-prod', sub='.10', kind='box')
+    f.box(574, 118, 156, 50, 'dns-cloud', sub='.53', kind='box')
+    f.arrow([(490, 124), (558, 124)], both=True, label='to-prod', lpos=(524, 114), anchor='middle')
+    f.box(560, 192, 184, 84, kind='zone')
+    f.text(574, 214, '検証 10.210.2.0/24', bold=True)
+    f.box(574, 224, 156, 44, 'web-dev', sub='.10', kind='box')
+    f.arrow([(445, 162), (445, 240), (558, 240)], both=True, label='to-dev', lpos=(502, 232), anchor='middle')
+    return f
+
 FIG_FUNCS = [levels, stack4, az, resp, share, vpc, web3, buildmap, designflow, dr4, iameval, reqpath, org, tgw, deploy, rag, pipeline,
-             s3cf, routes, heal, dbsecret, alarmflow, serverless, cicd, migflow, k8sobj]
+             s3cf, routes, heal, dbsecret, alarmflow, serverless, cicd, migflow, k8sobj, netlab]
 
 def all_figs():
     out = {}
