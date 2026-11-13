@@ -49,3 +49,7 @@ jobs:
         run: |
           aws --version
           python3 tests/cli_examples_check.py
+      - name: Check the lab scripts
+        run: |
+          bash -n labs/faults/inject.sh
+          shellcheck labs/faults/inject.sh

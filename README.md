@@ -33,6 +33,7 @@
 | `labs/network/` | 第28章の実習（手元のネットワーク）のファイルと、最初から最後まで通して確かめるスクリプト |
 | `labs/migration/` | 第29章の実習（移行のリハーサル）のファイルと、最初から最後まで通して確かめるスクリプト |
 | `labs/k8s/` | 第31章の実習（手元のKubernetes）のファイルと、最初から最後まで通して確かめるスクリプト |
+| `labs/faults/` | 第35章の演習で、参考実装の環境に障害を入れるスクリプト |
 | `.github/workflows/deploy.yml` | PR・pushを検証し、手動実行と公開承認でPagesへ反映する |
 | `.github/workflows/labs.yml` | 参考実装の書式・文法・設計テストと、本文に載せたAWS CLIのコマンドを検査する |
 | `.github/workflows/network-lab.yml` | 第28章の実習を、Docker Compose で実際に動かして確かめる |

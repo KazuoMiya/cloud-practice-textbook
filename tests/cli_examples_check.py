@@ -33,8 +33,10 @@ MODEL_NAME = {'s3api': 's3'}
 
 
 def printed_commands():
-    for path in sorted([*(ROOT / 'book').glob('*.md'), *(ROOT / 'labs').rglob('*.md')]):
+    for path in sorted([*(ROOT / 'book').glob('*.md'), *(ROOT / 'labs').rglob('*.md'), *(ROOT / 'labs').rglob('*.sh')]):
         text = path.read_text(encoding='utf-8')
+        if path.suffix == '.sh':
+            text = '```bash\n' + text + '```'
         found = []
         for block in re.findall(r'```bash\n(.*?)```', text, re.S):
             for line in re.sub(r'\\\n\s*', ' ', block).splitlines():
