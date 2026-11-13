@@ -130,6 +130,8 @@
 - [Amazon ECS のブルー/グリーンデプロイ](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-blue-green.html)（Amazon ECS）
 - [Amazon ECS のリニアとカナリアのデプロイ](https://aws.amazon.com/about-aws/whats-new/2025/10/amazon-ecs-built-in-linear-canary-deployments)（AWS、2025年10月）
 - [Amazon EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/automode.html)（Amazon EKS）
+- [kind のクイックスタート](https://kind.sigs.k8s.io/docs/user/quick-start/)（Kubernetes SIGs。手元にクラスターを作る道具）
+- [kubectl などの道具の入れ方](https://kubernetes.io/docs/tasks/tools/)（Kubernetes）
 - [Amazon Bedrock Knowledge Bases](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html)（Amazon Bedrock）
 
 学習と資格

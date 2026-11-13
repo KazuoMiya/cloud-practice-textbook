@@ -1,0 +1,43 @@
+name: Kubernetes lab
+
+on:
+  pull_request:
+    paths:
+      - labs/k8s/**
+      - book/31-k8s.md
+      - .github/workflows/k8s-lab.yml
+  push:
+    branches: [main]
+    paths:
+      - labs/k8s/**
+      - book/31-k8s.md
+      - .github/workflows/k8s-lab.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: k8s-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kind:
+    name: Kubernetes lab on kind
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Tool versions
+        run: |
+          docker version --format 'docker {{.Server.Version}}'
+          kind version
+          kubectl version --client
+      - name: Check the script
+        run: |
+          bash -n labs/k8s/verify.sh
+          shellcheck labs/k8s/verify.sh
+      - name: Run the lab from start to finish on a real cluster
+        run: bash labs/k8s/verify.sh
