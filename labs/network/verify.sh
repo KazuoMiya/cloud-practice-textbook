@@ -31,7 +31,6 @@ retry() { # retry <回数> <コマンド...>：成功するまで、1秒おき�
 }
 # 機器のインターフェースを通るICMPを、指定した秒数だけ記録する
 capture() { run "$1" timeout "$3" tcpdump -lnpi "$2" icmp 2>/dev/null || true; }
-page() { try "$1" curl -s -m 3 "$2"; }
 
 say "1. 実習用のコンテナを立て、静的な経路で学ぶ構成を作る"
 docker compose up -d --build
@@ -73,11 +72,11 @@ grep -q 'unreachable' "$cap" || fail "中継点が「行き先がない」と返
 say "5. 中継点にも戻りの経路を足す：つながる"
 run hub ip route add 192.168.210.0/24 via 192.168.255.1
 run pc ping -c 2 -W 1 10.210.1.10 || fail "行きと戻りの経路がそろったのに、届かない"
-[ "$(page pc http://10.210.1.10/)" = web-prod ] || fail "社内から、本番のサーバーのページを取得できない"
-[ "$(page pc http://10.210.2.10/)" = web-dev ] || fail "社内から、検証のサーバーのページを取得できない"
+[ "$(try pc curl -s -m 3 http://10.210.1.10/)" = web-prod ] || fail "社内から、本番のサーバーのページを取得できない"
+[ "$(try pc curl -s -m 3 http://10.210.2.10/)" = web-dev ] || fail "社内から、検証のサーバーのページを取得できない"
 
 say "6. つないだだけでは、本番と検証も通信できてしまう"
-[ "$(page web-prod http://10.210.2.10/)" = web-dev ] || fail "分ける前なのに、本番から検証へ届かない"
+[ "$(try web-prod curl -s -m 3 http://10.210.2.10/)" = web-dev ] || fail "分ける前なのに、本番から検証へ届かない"
 
 say "7. 中継点の経路表を分けて、本番と検証をつながない"
 run hub ip route add 192.168.210.0/24 via 192.168.255.1 table 101
@@ -88,12 +87,15 @@ run hub ip route add blackhole default table 102
 run hub ip rule add iif to-dev lookup 102
 run hub ip rule
 run hub ip route show table 101
-[ -z "$(page web-prod http://10.210.2.10/)" ] || fail "経路表を分けたのに、本番から検証へ届く"
-[ -z "$(page web-dev http://10.210.1.10/)" ] || fail "経路表を分けたのに、検証から本番へ届く"
-[ "$(page pc http://10.210.1.10/)" = web-prod ] || fail "経路表を分けたら、社内から本番へ届かなくなった"
-[ "$(page pc http://10.210.2.10/)" = web-dev ] || fail "経路表を分けたら、社内から検証へ届かなくなった"
+[ -z "$(try web-prod curl -s -m 3 http://10.210.2.10/)" ] || fail "経路表を分けたのに、本番から検証へ届く"
+[ -z "$(try web-dev curl -s -m 3 http://10.210.1.10/)" ] || fail "経路表を分けたのに、検証から本番へ届く"
+[ "$(try pc curl -s -m 3 http://10.210.1.10/)" = web-prod ] || fail "経路表を分けたら、社内から本番へ届かなくなった"
+[ "$(try pc curl -s -m 3 http://10.210.2.10/)" = web-dev ] || fail "経路表を分けたら、社内から検証へ届かなくなった"
 run web-dev ping -c 1 -W 1 192.168.210.10 || fail "経路表を分けたら、検証から社内へ届かなくなった"
 echo "社内からは両方に届き、本番と検証の間は届かない（期待どおり）"
+out=$(try web-dev nslookup -timeout=2 web.dev.cloud.internal 10.210.1.53)
+echo "$out"
+if grep -q '10\.210\.2\.10' <<<"$out"; then fail "検証から、本番にあるDNSサーバーへ届いている"; fi
 
 say "8. 細かい経路が勝つ：1台分の経路を足すと、その1台へ届かなくなる"
 run hub ip route add 10.210.1.10/32 via 192.168.255.1
@@ -131,7 +133,7 @@ retry 30 best_is_wan1 || fail "router-office が、wan1 からの経路を最良
 run vtysh -N router-office -c 'show bgp summary'
 run vtysh -N router-office -c 'show ip bgp'
 run router-office ip route
-[ "$(page pc http://10.210.1.10/)" = web-prod ] || fail "BGPの構成で、社内から本番のサーバーに届かない"
+[ "$(try pc curl -s -m 3 http://10.210.1.10/)" = web-prod ] || fail "BGPの構成で、社内から本番のサーバーに届かない"
 
 say "12. 通信を続けながら wan1 を切る：しばらく途切れてから、wan2 に切り替わる"
 run pc ping -i 0.2 -c 60 -W 1 10.210.1.10 >"$cap" &
