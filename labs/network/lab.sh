@@ -82,7 +82,9 @@ office() { # 社内：端末、DNSサーバー、ルーター。端末とDNSサ�
   ip netns exec dns-office ip route add default via 192.168.210.254
   mkdir -p /etc/netns/pc
   echo 'nameserver 192.168.210.53' > /etc/netns/pc/resolv.conf
-  dns dns-office --host-record=files.corp.internal,192.168.210.20 --servers-file="$FORWARD"
+  # corp.internal の名前は、このサーバーが答える。ほかの名前の聞き先は、転送の設定（$FORWARD）で決まる
+  dns dns-office --local=/corp.internal/ --host-record=files.corp.internal,192.168.210.20 \
+    --servers-file="$FORWARD"
 }
 
 static() {
@@ -107,7 +109,7 @@ static() {
   ip netns exec web-dev ip route add default via 10.210.2.254
   web web-prod
   web web-dev
-  dns dns-cloud --host-record=web.prod.cloud.internal,10.210.1.10 \
+  dns dns-cloud --local=/cloud.internal/ --host-record=web.prod.cloud.internal,10.210.1.10 \
     --host-record=web.dev.cloud.internal,10.210.2.10
   echo '静的な経路で学ぶ構成を作りました。機器： pc dns-office router-office hub web-prod dns-cloud web-dev'
 }
