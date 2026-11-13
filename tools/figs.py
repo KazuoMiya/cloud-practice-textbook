@@ -562,8 +562,64 @@ def netlab():
     f.arrow([(445, 162), (445, 240), (558, 240)], both=True, label='to-dev', lpos=(502, 232), anchor='middle')
     return f
 
+def flow5w(name, label, steps, height=112):
+    """Five wider boxes in a row (for longer names), each with a bold name and two body lines, joined by arrows."""
+    f = Fig(name, 760, height, label)
+    for (title, lines, k), x in zip(steps, (12, 164, 316, 468, 620)):
+        f.box(x, 16, 136, 72, title, kind=k, lines=lines)
+    for x in (149, 301, 453, 605):
+        f.arrow([(x, 52), (x + 14, 52)])
+    return f
+
+def tfflow():
+    f = Fig('tfflow', 760, 250, 'Terraformは、コードと実際の構成を、ステートを通して比べる。plan は差分を表示し、apply は差分を反映する')
+    f.box(24, 36, 190, 68, 'コード（.tf）', sub='あるべき姿。Gitで管理する')
+    f.box(285, 36, 190, 68, 'ステート', sub='コードの資源と、実際のIDの対応', kind='acc', bold=True)
+    f.box(546, 36, 190, 68, '実際の構成', sub='AWSの上にある資源')
+    f.arrow([(214, 70), (283, 70)], label='比べる', lpos=(249, 60), anchor='middle')
+    f.arrow([(546, 70), (477, 70)], label='状態を読む', lpos=(511, 60), anchor='middle')
+    f.text(380, 26, 'plan：コードと実際の構成を比べ、差分を表示する。何も変えない', cls='fg-m', anchor='middle')
+    f.arrow([(119, 104), (119, 156), (600, 156), (600, 106)])
+    f.text(360, 148, 'apply：差分を実際の構成に反映し、ステートを書き換える', cls='fg-m', anchor='middle')
+    f.box(546, 196, 190, 40, '手での変更', kind='dash')
+    f.arrow([(690, 196), (690, 106)], dashed=True)
+    f.text(536, 220, '管理画面やCLIで変えたものは、次の plan に、差分として表示される', cls='fg-m', anchor='end')
+    return f
+
+def probe():
+    f = flow5w('probe', '障害の調査では、利用者に近い側から順に確かめ、最後に操作の記録で裏付ける', [
+        ('利用者の側', ['curl で確かめる', '状態コードと秒数'], 'box'), ('ALB', ['ターゲットの状態', '異常の理由'], 'box'),
+        ('許可と経路', ['通信の許可（SG）', 'ルートテーブル'], 'box'), ('サーバーの中', ['Session Manager', 'プロセス、ログ'], 'box'),
+        ('操作の記録', ['CloudTrail', 'plan の差分'], 'acc')], height=132)
+    f.text(380, 116, '利用者に近い側から、どこまで届いているかを確かめる。原因の見当がついたら、誰が何を変えたかを、記録で裏付ける', cls='fg-m', anchor='middle')
+    return f
+
+def docflow():
+    f = flow5w('docflow', '文書は、設計から構築、試験の順に書き、構築の後に実際の値と突き合わせる。障害の後は、設計書と手順書を見直す', [
+        ('要件定義書', ['何を、どの水準で', '設計の前に書く'], 'box'), ('基本設計書', ['構成と、その理由', '構築の前に書く'], 'box'),
+        ('パラメータシート', ['資源ごとの値', '構築の前に書く'], 'acc'), ('作業手順書', ['順番と確認の方法', '作業の前に書く'], 'box'),
+        ('試験項目書', ['項目、結果、証跡', '構築の前後に書く'], 'box')], height=244)
+    f.arrow([(688, 88), (688, 114), (384, 114), (384, 90)])
+    f.text(536, 132, '構築の後、実際の値と突き合わせる', cls='fg-m', anchor='middle')
+    f.text(16, 196, '運用に入ってから', bold=True)
+    f.box(164, 156, 136, 72, '運用手順書', kind='box', lines=['定常の作業', '異常のときの初動'])
+    f.box(316, 156, 136, 72, '障害報告書', kind='box', lines=['原因と、再発防止', '障害の後に書く'])
+    f.arrow([(301, 192), (315, 192)])
+    f.arrow([(452, 192), (500, 192)])
+    f.text(508, 196, '設計書と手順書を、見直す', cls='fg-m')
+    return f
+
+def mentorloop():
+    f = flow5w('mentorloop', '1つのステップは、読む、作って壊す、片付けて文書にする、説明して判定を受ける、の順に進める', [
+        ('読む', ['仕組みを', '公式の資料で読む'], 'box'), ('作る、壊す', ['合格基準まで作る', 'わざと壊して直す'], 'box'),
+        ('片付け、文書', ['その日のうちに消す', '値と突き合わせる'], 'box'), ('説明と判定', ['5分の説明と質問', '4つそろえば合格'], 'acc'),
+        ('次のステップ', ['所見を', '記録に残す'], 'box')], height=152)
+    f.arrow([(536, 88), (536, 116), (232, 116), (232, 90)], dashed=True)
+    f.text(384, 136, '条件つき、やり直し：足りない点を伝え、出し直す', cls='fg-m', anchor='middle')
+    return f
+
 FIG_FUNCS = [levels, stack4, az, resp, share, vpc, web3, buildmap, designflow, dr4, iameval, reqpath, org, tgw, deploy, rag, pipeline,
-             s3cf, routes, heal, dbsecret, alarmflow, serverless, cicd, migflow, k8sobj, netlab]
+             s3cf, routes, heal, dbsecret, alarmflow, serverless, cicd, migflow, k8sobj, netlab, tfflow, probe, docflow, mentorloop]
 
 def all_figs():
     out = {}
