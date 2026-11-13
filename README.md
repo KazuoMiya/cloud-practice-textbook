@@ -30,8 +30,10 @@
 | `tools/figs.py` | 図の定義。図は、ここからSVGとして作られる |
 | `tools/build.py` | 原稿からHTMLと同じサイト内のCSS・JavaScriptファイルを作る |
 | `labs/migration/` | 第29章の実習（移行のリハーサル）のファイルと、最初から最後まで通して確かめるスクリプト |
+| `labs/k8s/` | 第31章の実習（手元のKubernetes）のファイルと、最初から最後まで通して確かめるスクリプト |
 | `.github/workflows/deploy.yml` | PR・pushを検証し、手動実行と公開承認でPagesへ反映する |
 | `.github/workflows/migration-lab.yml` | 第29章の実習を、Docker Compose で実際に動かして確かめる |
+| `.github/workflows/k8s-lab.yml` | 第31章の実習を、実際のクラスター（kind）で動かして確かめる |
 
 ## 手元でページを作る
 
